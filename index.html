@@ -1,633 +1,1335 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="stylesheet" href="styles.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pokémon Battle Simulator</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<title>PokéTeam Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:#E3350D; --red-dark:#b32a09; --red-light:#fde8e3;
+  --yellow:#F5C518; --yellow-light:#fffbe6;
+  --blue:#2563EB; --blue-light:#EFF4FF; --blue-mid:#BFCFFF;
+  --green:#16A34A; --green-light:#F0FDF4;
+  --bg:#F7F8FA; --surface:#FFFFFF; --surface2:#F0F2F7;
+  --border:#E2E5EE; --border-strong:#C8CCDA;
+  --text:#0F1629; --muted:#6B7394; --muted2:#9CA3BF;
+  --shadow-sm:0 1px 3px rgba(15,22,41,0.06),0 1px 2px rgba(15,22,41,0.04);
+  --shadow:0 4px 16px rgba(15,22,41,0.08),0 1px 4px rgba(15,22,41,0.04);
+  --shadow-lg:0 12px 40px rgba(15,22,41,0.12),0 4px 12px rgba(15,22,41,0.06);
+  --radius:12px; --radius-lg:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
+/* ── HEADER ── */
+header{
+  background:var(--surface);border-bottom:1.5px solid var(--border);
+  padding:0 2rem;height:60px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:100;
+  box-shadow:var(--shadow-sm);
+}
+.logo{font-family:'Press Start 2P',monospace;font-size:11px;color:var(--text);letter-spacing:0.5px;}
+.logo em{color:var(--red);font-style:normal;}
+.header-nav{display:flex;gap:8px;}
+.nav-btn{
+  background:none;border:1.5px solid var(--border);border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;
+  color:var(--muted);padding:6px 14px;cursor:pointer;transition:all .15s;
+}
+.nav-btn:hover,.nav-btn.active{background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue);}
+
+/* ── LAYOUT ── */
+.app{display:flex;gap:0;min-height:calc(100vh - 60px);}
+
+/* SIDEBAR */
+.sidebar{
+  width:300px;min-width:300px;background:var(--surface);
+  border-right:1.5px solid var(--border);padding:1.5rem;
+  display:flex;flex-direction:column;gap:1.5rem;
+  height:calc(100vh - 60px);overflow-y:auto;position:sticky;top:60px;
+}
+.sidebar-title{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem;}
+
+/* SEARCH */
+.search-wrap{position:relative;}
+.search-input{
+  width:100%;padding:.75rem 1rem .75rem 2.75rem;
+  font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;
+  border:1.5px solid var(--border);border-radius:var(--radius);
+  background:var(--bg);color:var(--text);outline:none;transition:all .15s;
+}
+.search-input:focus{border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+.search-icon{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;}
+.search-dropdown{
+  position:absolute;top:calc(100% + 6px);left:0;right:0;
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--shadow-lg);
+  overflow:hidden;max-height:260px;overflow-y:auto;z-index:300;display:none;
+}
+.search-dropdown.open{display:block;}
+.search-item{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;
+  cursor:pointer;transition:background .12s;border-bottom:1px solid var(--border);
+}
+.search-item:last-child{border-bottom:none;}
+.search-item:hover{background:var(--blue-light);}
+.si-sprite{width:38px;height:38px;object-fit:contain;image-rendering:pixelated;}
+.si-name{font-weight:700;font-size:14px;}
+.si-num{font-size:11px;color:var(--muted);font-weight:600;}
+.search-empty{padding:1rem;text-align:center;font-size:13px;color:var(--muted);}
+
+/* TYPE BADGES */
+.type-badge{
+  font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;
+  color:#fff;text-transform:uppercase;letter-spacing:.5px;
+}
+.type-normal{background:#A8A77A}.type-fire{background:#EE8130}
+.type-water{background:#6390F0}.type-electric{background:#F7D02C;color:#333}
+.type-grass{background:#7AC74C}.type-ice{background:#96D9D6;color:#333}
+.type-fighting{background:#C22E28}.type-poison{background:#A33EA1}
+.type-ground{background:#E2BF65;color:#333}.type-flying{background:#A98FF3}
+.type-psychic{background:#F95587}.type-bug{background:#A6B91A}
+.type-rock{background:#B6A136}.type-ghost{background:#735797}
+.type-dragon{background:#6F35FC}.type-dark{background:#705746}
+.type-steel{background:#B7B7CE;color:#333}.type-fairy{background:#D685AD}
+
+/* SAVED TEAMS SIDEBAR */
+.saved-team-card{
+  background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:.85rem 1rem;cursor:pointer;transition:all .15s;position:relative;
+}
+.saved-team-card:hover{border-color:var(--blue-mid);background:var(--blue-light);}
+.saved-team-card.loaded{border-color:var(--blue);background:var(--blue-light);}
+.stc-name{font-weight:800;font-size:14px;margin-bottom:4px;}
+.stc-count{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+.stc-sprites{display:flex;gap:2px;}
+.stc-sprite{width:28px;height:28px;object-fit:contain;image-rendering:pixelated;}
+.stc-actions{display:flex;gap:4px;margin-top:8px;}
+.stc-btn{
+  font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;
+  border:1.5px solid var(--border);background:var(--surface);
+  cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;color:var(--muted);
+}
+.stc-btn:hover{background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue);}
+.stc-btn.danger:hover{background:var(--red-light);border-color:#fca99a;color:var(--red);}
+.no-teams{font-size:13px;color:var(--muted2);text-align:center;padding:1.5rem 0;font-weight:500;}
+
+/* ── MAIN CONTENT ── */
+.main{flex:1;padding:2rem;overflow-y:auto;}
+
+/* PAGE TABS */
+.page{display:none;}
+.page.active{display:block;}
+
+/* TEAM HEADER */
+.team-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+.team-title{font-size:20px;font-weight:900;}
+.team-subtitle{font-size:13px;color:var(--muted);font-weight:500;margin-top:2px;}
+.team-count{
+  font-family:'Press Start 2P',monospace;font-size:9px;
+  background:var(--blue-light);color:var(--blue);padding:6px 12px;
+  border-radius:20px;border:1.5px solid var(--blue-mid);
+}
+
+/* TEAM GRID */
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;}
+
+.poke-card{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:.85rem;position:relative;transition:all .15s;min-height:160px;
+  box-shadow:var(--shadow-sm);
+}
+.poke-card:hover{box-shadow:var(--shadow);border-color:var(--border-strong);}
+.poke-card-empty{
+  background:var(--bg);border:2px dashed var(--border);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:6px;cursor:default;
+  color:var(--muted2);font-size:13px;font-weight:600;
+}
+.poke-card-empty .empty-icon{font-size:26px;opacity:.3;}
+
+.card-actions{position:absolute;top:7px;right:7px;display:flex;gap:4px;}
+.card-btn{
+  width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:12px;
+  transition:transform .1s,background .1s;
+}
+.card-btn:hover{transform:scale(1.15);}
+.btn-edit{background:#EEF4FF;color:var(--blue);}
+.btn-remove{background:#FEF2F2;color:var(--red);}
+
+.card-sprite{
+  width:64px;height:64px;object-fit:contain;image-rendering:pixelated;
+  display:block;margin:0 auto 4px;
+}
+.card-name{font-weight:900;font-size:13px;text-align:center;margin-bottom:4px;}
+.card-types{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin-bottom:5px;}
+.card-nature{text-align:center;font-size:10px;font-weight:700;color:var(--blue);margin-bottom:5px;}
+.card-moves{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;}
+.move-pill{
+  font-size:9px;font-weight:800;padding:2px 6px;border-radius:20px;
+  background:var(--bg);color:var(--muted);border:1px solid var(--border);
+  max-width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.card-eviv{
+  margin-top:5px;font-size:9px;color:var(--muted2);text-align:center;font-weight:600;
+}
+
+/* ── MODAL ── */
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(15,22,41,.55);
+  z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);
+}
+.overlay.open{display:flex;}
+.modal{
+  background:var(--surface);border-radius:var(--radius-lg);
+  width:700px;max-width:95vw;max-height:92vh;overflow-y:auto;
+  box-shadow:var(--shadow-lg);padding:2rem;position:relative;
+  animation:modalIn .2s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.modal-close{
+  position:absolute;top:1rem;right:1rem;background:var(--bg);border:none;
+  border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background .15s;
+}
+.modal-close:hover{background:var(--border);}
+
+.modal-hero{display:flex;align-items:center;gap:1.25rem;padding-bottom:1.25rem;border-bottom:1.5px solid var(--border);margin-bottom:1.25rem;}
+.modal-sprite{
+  width:100px;height:100px;object-fit:contain;image-rendering:pixelated;
+  background:var(--bg);border-radius:12px;padding:4px;border:1.5px solid var(--border);
+}
+.modal-name{font-weight:900;font-size:22px;text-transform:capitalize;}
+.modal-num{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:5px;}
+.modal-types{display:flex;gap:5px;}
+
+/* TABS */
+.tab-bar{display:flex;gap:4px;margin-bottom:1.25rem;}
+.tab{
+  flex:1;padding:.5rem;font-family:'DM Sans',sans-serif;font-weight:700;font-size:12px;
+  border:1.5px solid var(--border);border-radius:8px;background:var(--bg);
+  cursor:pointer;transition:all .15s;color:var(--muted);
+}
+.tab.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* STAT BARS */
+.stat-row{display:grid;grid-template-columns:60px 36px 1fr 70px;align-items:center;gap:8px;margin-bottom:7px;}
+.stat-lbl{font-size:11px;font-weight:700;color:var(--muted);}
+.stat-base{font-weight:800;font-size:13px;text-align:right;}
+.bar-bg{background:var(--bg);border-radius:20px;height:8px;overflow:hidden;border:1px solid var(--border);}
+.bar-fill{height:100%;border-radius:20px;transition:width .4s;}
+.ev-inp{
+  width:64px;border:1.5px solid var(--border);border-radius:6px;
+  padding:3px 6px;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:700;
+  text-align:center;color:var(--text);outline:none;background:var(--bg);
+}
+.ev-inp:focus{border-color:var(--blue);background:var(--surface);}
+
+.ev-total-row{display:flex;align-items:center;gap:10px;margin-bottom:1rem;font-size:12px;font-weight:700;}
+.ev-bar-bg{flex:1;height:6px;background:var(--bg);border-radius:20px;border:1px solid var(--border);overflow:hidden;}
+.ev-bar-fill{height:100%;border-radius:20px;background:var(--green);transition:width .3s;}
+.ev-bar-fill.maxed{background:var(--red);}
+
+/* IV */
+.iv-row{display:grid;grid-template-columns:60px 1fr 32px;align-items:center;gap:8px;margin-bottom:7px;}
+.iv-row label{font-size:11px;font-weight:700;color:var(--muted);}
+.iv-row input[type=range]{width:100%;accent-color:var(--blue);}
+.iv-val{font-size:12px;font-weight:800;text-align:center;}
+
+/* FORM */
+.form-row{margin-bottom:1rem;}
+.form-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;}
+.form-sel{
+  width:100%;padding:.6rem .85rem;font-size:14px;font-family:'DM Sans',sans-serif;
+  font-weight:600;border:1.5px solid var(--border);border-radius:8px;
+  background:var(--bg);color:var(--text);outline:none;cursor:pointer;transition:all .15s;
+}
+.form-sel:focus{border-color:var(--blue);background:var(--surface);}
+
+.moves-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.move-slot label{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px;display:block;}
+
+.nature-summary{
+  font-size:13px;font-weight:700;padding:.7rem 1rem;background:var(--bg);
+  border-radius:8px;border:1.5px solid var(--border);margin-top:.5rem;
+}
+
+/* MODAL FOOTER */
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:1.5rem;padding-top:1.25rem;border-top:1.5px solid var(--border);}
+.btn{
+  border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-weight:700;
+  font-size:14px;padding:.65rem 1.5rem;cursor:pointer;transition:all .15s;
+}
+.btn-ghost{background:var(--bg);color:var(--muted);border:1.5px solid var(--border);}
+.btn-ghost:hover{background:var(--border);}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 3px 0 #1d4ed8;}
+.btn-primary:hover{background:#1d4ed8;transform:translateY(-1px);}
+.btn-primary:active{transform:translateY(1px);box-shadow:0 1px 0 #1d4ed8;}
+.btn-red{background:var(--red);color:#fff;box-shadow:0 3px 0 var(--red-dark);}
+.btn-red:hover{background:var(--red-dark);}
+.btn-yellow{background:var(--yellow);color:#5a3e00;border:1.5px solid #d4a800;}
+.btn-yellow:hover{background:#dbb000;}
+
+/* SAVE MODAL */
+.save-modal{width:460px;}
+.save-input{
+  width:100%;padding:.75rem 1rem;font-size:15px;font-family:'DM Sans',sans-serif;
+  font-weight:600;border:1.5px solid var(--border);border-radius:var(--radius);
+  outline:none;background:var(--bg);color:var(--text);
+}
+.save-input:focus{border-color:var(--blue);background:var(--surface);}
+
+/* BATTLE PAGE */
+.trainer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem;}
+.trainer-card{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:1.2rem;cursor:pointer;transition:all .15s;box-shadow:var(--shadow-sm);
+  position:relative;
+}
+.trainer-card:hover{box-shadow:var(--shadow);border-color:var(--border-strong);transform:translateY(-2px);}
+.trainer-card.selected{border-color:var(--blue);background:var(--blue-light);box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+.trainer-icon{font-size:36px;margin-bottom:.5rem;display:block;}
+.trainer-name{font-weight:900;font-size:15px;}
+.trainer-type{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:.5rem;}
+.trainer-mons{display:flex;gap:2px;flex-wrap:wrap;}
+.trainer-mon-sprite{width:30px;height:30px;object-fit:contain;image-rendering:pixelated;}
+.trainer-badge{
+  position:absolute;top:8px;right:8px;font-size:9px;font-weight:800;
+  padding:2px 8px;border-radius:20px;
+}
+.badge-easy{background:#dcfce7;color:var(--green);}
+.badge-med{background:var(--yellow-light);color:#92620a;}
+.badge-hard{background:var(--red-light);color:var(--red);}
+
+/* FOOTER BAR */
+.footer-bar{
+  position:fixed;bottom:0;left:300px;right:0;background:var(--surface);
+  border-top:1.5px solid var(--border);padding:1rem 2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  z-index:200;box-shadow:0 -4px 20px rgba(15,22,41,.06);
+}
+.footer-info{font-size:13px;font-weight:700;color:var(--muted);}
+.footer-info strong{color:var(--text);}
+.footer-actions{display:flex;gap:8px;}
+
+/* BATTLE RESULT */
+.battle-result{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);
+  padding:2rem;margin-top:1.5rem;box-shadow:var(--shadow);
+  animation:modalIn .3s ease;
+}
+.result-banner{
+  text-align:center;padding:1.5rem;border-radius:var(--radius);margin-bottom:1.5rem;
+  font-family:'Press Start 2P',monospace;font-size:14px;
+}
+.result-win{background:linear-gradient(135deg,#f0fdf4,#dcfce7);color:var(--green);border:2px solid #86efac;}
+.result-lose{background:linear-gradient(135deg,#fef2f2,var(--red-light));color:var(--red);border:2px solid #fca5a5;}
+
+.matchup-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin:1rem 0;}
+.matchup-card{
+  background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:.85rem;text-align:center;
+}
+.matchup-card img{width:48px;height:48px;object-fit:contain;image-rendering:pixelated;}
+.matchup-result{font-size:11px;font-weight:800;margin-top:4px;}
+.matchup-win{color:var(--green);}
+.matchup-lose{color:var(--red);}
+.matchup-draw{color:var(--muted);}
+
+.mvp-section{
+  background:var(--yellow-light);border:1.5px solid #fcd34d;border-radius:var(--radius);
+  padding:1rem;display:flex;align-items:center;gap:1rem;margin:1rem 0;
+}
+.mvp-sprite{width:60px;height:60px;object-fit:contain;image-rendering:pixelated;}
+.mvp-label{font-size:11px;font-weight:800;color:#92620a;margin-bottom:3px;text-transform:uppercase;letter-spacing:1px;}
+.mvp-name{font-weight:900;font-size:16px;}
+.mvp-reason{font-size:12px;color:var(--muted);font-weight:600;}
+
+.log-list{list-style:none;margin-top:1rem;}
+.log-list li{
+  font-size:13px;font-weight:600;padding:.5rem .75rem;
+  border-radius:8px;margin-bottom:4px;background:var(--bg);
+  border-left:3px solid var(--border);
+}
+.log-list li.win{border-left-color:var(--green);background:var(--green-light);}
+.log-list li.lose{border-left-color:var(--red);background:var(--red-light);}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);
+  background:var(--text);color:#fff;padding:.65rem 1.4rem;border-radius:30px;
+  font-size:13px;font-weight:700;opacity:0;pointer-events:none;z-index:9999;
+  transition:opacity .25s,transform .25s;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* IQ UTIL BTNS */
+.iv-quick-btns{display:flex;gap:6px;margin-top:.5rem;}
+.iv-qbtn{
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;
+  border:1.5px solid var(--border);background:var(--bg);cursor:pointer;
+  font-family:'DM Sans',sans-serif;color:var(--muted);transition:all .12s;
+}
+.iv-qbtn:hover{background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue);}
+
+/* TEAM SELECT FOR BATTLE */
+.team-select-row{
+  display:flex;align-items:center;gap:12px;background:var(--bg);
+  border:1.5px solid var(--border);border-radius:var(--radius);padding:.85rem 1rem;margin-bottom:1.5rem;
+}
+.team-select-row label{font-weight:800;font-size:13px;min-width:100px;}
+.team-select-row .form-sel{max-width:260px;}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:20px;}
+
+@media(max-width:900px){
+  .sidebar{width:240px;min-width:240px;}
+  .footer-bar{left:240px;}
+  .team-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
 </head>
 <body>
 
 <header>
-  <div class="logo">⚔ <span>POKÉ</span>BATTLE</div>
-  <div class="header-subtitle">Team Builder</div>
+  <div class="logo">⚔ <em>POKÉ</em>TEAM</div>
+  <div class="header-nav">
+    <button class="nav-btn active" onclick="showPage('builder')" id="nav-builder">🏗 Team Builder</button>
+    <button class="nav-btn" onclick="showPage('battle')" id="nav-battle">⚔ Simulate Battle</button>
+  </div>
 </header>
 
-<div class="container">
-
-  <!-- SEARCH SECTION -->
-  <div class="search-section">
-    <div class="search-wrap">
-      <p class="section-title">🔍 Find a Pokémon</p>
-      <div class="search-box">
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <!-- SEARCH -->
+    <div>
+      <div class="sidebar-title">🔍 Search Pokémon</div>
+      <div class="search-wrap">
         <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Search by name or number..." autocomplete="off">
+        <input class="search-input" id="searchInput" type="text" placeholder="Name or number…" autocomplete="off">
+        <div class="search-dropdown" id="searchDropdown"></div>
       </div>
-      <div class="search-results" id="searchResults"></div>
-      <p class="search-hint">Search any of the 1000+ Pokémon — tap to add to your team</p>
+    </div>
+    <!-- SAVED TEAMS -->
+    <div style="flex:1;">
+      <div class="sidebar-title">💾 Saved Teams</div>
+      <div id="savedTeamsList"></div>
     </div>
   </div>
 
-  <!-- TWO COLUMNS: YOUR TEAM + ENEMY TEAM -->
-  <div class="two-col">
-    <!-- YOUR TEAM -->
-    <div>
-      <div class="section-header">
-        <p class="section-title">🎮 Your Team</p>
-        <span id="playerCount" style="font-size:13px;font-weight:800;color:var(--blue)">0 / 6</span>
+  <!-- MAIN -->
+  <div class="main" style="padding-bottom:80px;">
+
+    <!-- BUILDER PAGE -->
+    <div class="page active" id="page-builder">
+      <div class="team-header">
+        <div>
+          <div class="team-title">Build Your Team</div>
+          <div class="team-subtitle">Search and select up to 6 Pokémon — then save your team.</div>
+        </div>
+        <div class="team-count" id="teamCount">0 / 6</div>
       </div>
-      <div class="team-grid" id="playerGrid"></div>
+      <div class="team-grid" id="teamGrid"></div>
     </div>
 
-    <!-- ENEMY TEAM -->
-    <div>
-      <div class="section-header">
-        <p class="section-title">🤖 Enemy Team</p>
-        <button class="randomize-btn" id="randomizeBtn" onclick="randomizeEnemy()">🎲 Randomize</button>
+    <!-- BATTLE PAGE -->
+    <div class="page" id="page-battle">
+      <div class="team-header">
+        <div>
+          <div class="team-title">Simulate Battle</div>
+          <div class="team-subtitle">Pick a saved team and challenge an AI Trainer.</div>
+        </div>
       </div>
-      <div class="team-grid" id="enemyGrid"></div>
+
+      <div class="team-select-row">
+        <label>Your Team</label>
+        <select class="form-sel" id="battleTeamSelect">
+          <option value="">— Select a saved team —</option>
+        </select>
+      </div>
+
+      <div class="sidebar-title">Choose an AI Trainer</div>
+      <div class="trainer-grid" id="trainerGrid"></div>
+      <div id="battleResultArea"></div>
     </div>
+
   </div>
-
 </div>
 
-<!-- STICKY FOOTER -->
+<!-- FOOTER -->
 <div class="footer-bar">
-  <div class="footer-counts">
-    <div><span class="count-label">Your team: </span><span class="count-val" id="footerPlayer">0/6</span></div>
-    <div><span class="count-label">Enemy team: </span><span class="count-val" id="footerEnemy">0/6</span></div>
+  <div class="footer-info">Team: <strong id="footerTeamName">Unsaved</strong> · <strong id="footerCount">0/6</strong> Pokémon</div>
+  <div class="footer-actions">
+    <button class="btn btn-ghost" onclick="openSaveModal()">💾 Save Team</button>
+    <button class="btn btn-yellow" onclick="showPage('battle')" id="battleBtn">⚔ Simulate Battle</button>
   </div>
-  <button class="start-btn" id="startBtn" disabled onclick="startBattle()">▶ START BATTLE</button>
 </div>
 
 <!-- POKEMON DETAIL MODAL -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal" id="modal">
+<div class="overlay" id="detailOverlay">
+  <div class="modal" id="detailModal">
     <button class="modal-close" onclick="closeModal()">✕</button>
-
-    <div class="modal-header">
-      <img class="modal-sprite" id="modalSprite" src="" alt="">
+    <div class="modal-hero">
+      <img class="modal-sprite" id="mSprite" src="" alt="">
       <div>
-        <div class="modal-poke-num" id="modalNum">#000</div>
-        <div class="modal-poke-name" id="modalName">Pokémon</div>
-        <div class="modal-types" id="modalTypes"></div>
+        <div class="modal-num" id="mNum">#000</div>
+        <div class="modal-name" id="mName">Pokémon</div>
+        <div class="modal-types" id="mTypes"></div>
       </div>
     </div>
-
-    <div class="modal-tabs">
-      <button class="tab-btn active" onclick="switchTab('stats')">📊 Stats & EVs</button>
-      <button class="tab-btn" onclick="switchTab('ivs')">🧬 IVs</button>
-      <button class="tab-btn" onclick="switchTab('moves')">⚡ Moves</button>
-      <button class="tab-btn" onclick="switchTab('nature')">🌿 Nature</button>
+    <div class="tab-bar">
+      <button class="tab active" onclick="switchTab('stats')">📊 Stats</button>
+      <button class="tab" onclick="switchTab('ivs')">🧬 IVs</button>
+      <button class="tab" onclick="switchTab('moves')">⚡ Moves</button>
+      <button class="tab" onclick="switchTab('nature')">🌿 Nature</button>
     </div>
-
-    <!-- STATS TAB -->
+    <!-- STATS -->
     <div class="tab-panel active" id="tab-stats">
       <div class="ev-total-row">
-        <span>EV Total:</span>
-        <div class="ev-total-bar-bg"><div class="ev-total-bar-fill" id="evTotalBar" style="width:0%"></div></div>
-        <span id="evTotalText">0 / 510</span>
+        <span style="font-size:12px;font-weight:700;color:var(--muted)">EV Total</span>
+        <div class="ev-bar-bg"><div class="ev-bar-fill" id="evTotalFill" style="width:0%"></div></div>
+        <span id="evTotalText" style="font-size:12px;font-weight:800;min-width:64px;">0 / 510</span>
       </div>
       <div id="statsContainer"></div>
     </div>
-
-    <!-- IVS TAB -->
+    <!-- IVS -->
     <div class="tab-panel" id="tab-ivs">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:1rem;font-weight:600">IVs range from 0–31. 31 is perfect. They affect your Pokémon's maximum possible stat values.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:.85rem;font-weight:500">IVs range 0–31. 31 is perfect.</p>
       <div id="ivsContainer"></div>
-      <div style="display:flex;gap:8px;margin-top:1rem">
-        <button class="randomize-btn" style="font-size:12px;padding:0.4rem 0.85rem" onclick="setAllIVs(31)">✨ Max All IVs</button>
-        <button class="randomize-btn" style="font-size:12px;padding:0.4rem 0.85rem;background:#EEF2FF;color:var(--blue)" onclick="randomizeAllIVs()">🎲 Randomize IVs</button>
+      <div class="iv-quick-btns">
+        <button class="iv-qbtn" onclick="setAllIVs(31)">✨ Max All</button>
+        <button class="iv-qbtn" onclick="setAllIVs(0)">Zero All</button>
+        <button class="iv-qbtn" onclick="randomIVs()">🎲 Random</button>
       </div>
     </div>
-
-    <!-- MOVES TAB -->
+    <!-- MOVES -->
     <div class="tab-panel" id="tab-moves">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:1rem;font-weight:600">Choose up to 4 moves from this Pokémon's learnset.</p>
-      <div class="moves-grid" id="movesContainer"></div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:.85rem;font-weight:500">Choose up to 4 moves from this Pokémon's learnset.</p>
+      <div class="moves-grid-2" id="movesContainer"></div>
     </div>
-
-    <!-- NATURE TAB -->
+    <!-- NATURE -->
     <div class="tab-panel" id="tab-nature">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:1rem;font-weight:600">Nature affects two stats by ±10%. Neutral natures have no effect.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:.85rem;font-weight:500">Nature affects two stats by ±10%.</p>
       <div class="form-row">
-        <label class="form-label">Nature</label>
-        <select class="form-select" id="natureSelect"></select>
+        <label class="form-lbl">Nature</label>
+        <select class="form-sel" id="natureSelect" onchange="onNatureChange()"></select>
       </div>
-      <div id="natureSummary" style="font-size:13px;font-weight:700;padding:0.75rem;background:#f5f7ff;border-radius:10px;margin-top:0.5rem"></div>
+      <div class="nature-summary" id="natureSummary"></div>
     </div>
-
     <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-confirm" onclick="confirmPokemon()">✓ Add to Team</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="confirmBtn" onclick="confirmPokemon()">✓ Add to Team</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
+<!-- SAVE MODAL -->
+<div class="overlay" id="saveOverlay">
+  <div class="modal save-modal">
+    <button class="modal-close" onclick="closeSaveModal()">✕</button>
+    <h2 style="font-size:18px;font-weight:900;margin-bottom:1rem;">Save Team</h2>
+    <div class="form-row">
+      <label class="form-lbl">Team Name</label>
+      <input class="save-input" type="text" id="saveNameInput" placeholder="e.g. Dragon Squad" maxlength="30">
+    </div>
+    <div style="margin-bottom:.5rem;font-size:12px;color:var(--muted);font-weight:600">Or overwrite an existing team:</div>
+    <select class="form-sel" id="overwriteSelect" style="margin-bottom:1.25rem;">
+      <option value="">— Save as new team —</option>
+    </select>
+    <div class="modal-footer" style="margin-top:0;padding-top:1rem;">
+      <button class="btn btn-ghost" onclick="closeSaveModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmSave()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== DATA =====
+// ══════════════════════════════════════════════════════
+// CONSTANTS & DATA
+// ══════════════════════════════════════════════════════
+const STAT_KEYS = ['hp','attack','defense','special-attack','special-defense','speed'];
+const STAT_LABELS = {hp:'HP',attack:'Atk',defense:'Def','special-attack':'SpA','special-defense':'SpD',speed:'Spe'};
+const STAT_COLORS = ['#EF4444','#F97316','#EAB308','#3B82F6','#8B5CF6','#EC4899'];
+
 const NATURES = [
-  {name:'Hardy',plus:null,minus:null},{name:'Lonely',plus:'atk',minus:'def'},
-  {name:'Brave',plus:'atk',minus:'spe'},{name:'Adamant',plus:'atk',minus:'spa'},
-  {name:'Naughty',plus:'atk',minus:'spd'},{name:'Bold',plus:'def',minus:'atk'},
-  {name:'Docile',plus:null,minus:null},{name:'Relaxed',plus:'def',minus:'spe'},
-  {name:'Impish',plus:'def',minus:'spa'},{name:'Lax',plus:'def',minus:'spd'},
-  {name:'Timid',plus:'spe',minus:'atk'},{name:'Hasty',plus:'spe',minus:'def'},
-  {name:'Serious',plus:null,minus:null},{name:'Jolly',plus:'spe',minus:'spa'},
-  {name:'Naive',plus:'spe',minus:'spd'},{name:'Modest',plus:'spa',minus:'atk'},
-  {name:'Mild',plus:'spa',minus:'def'},{name:'Quiet',plus:'spa',minus:'spe'},
-  {name:'Bashful',plus:null,minus:null},{name:'Rash',plus:'spa',minus:'spd'},
-  {name:'Calm',plus:'spd',minus:'atk'},{name:'Gentle',plus:'spd',minus:'def'},
-  {name:'Sassy',plus:'spd',minus:'spe'},{name:'Careful',plus:'spd',minus:'spa'},
-  {name:'Quirky',plus:null,minus:null}
+  {n:'Hardy',p:null,m:null},{n:'Lonely',p:'attack',m:'defense'},
+  {n:'Brave',p:'attack',m:'speed'},{n:'Adamant',p:'attack',m:'special-attack'},
+  {n:'Naughty',p:'attack',m:'special-defense'},{n:'Bold',p:'defense',m:'attack'},
+  {n:'Docile',p:null,m:null},{n:'Relaxed',p:'defense',m:'speed'},
+  {n:'Impish',p:'defense',m:'special-attack'},{n:'Lax',p:'defense',m:'special-defense'},
+  {n:'Timid',p:'speed',m:'attack'},{n:'Hasty',p:'speed',m:'defense'},
+  {n:'Serious',p:null,m:null},{n:'Jolly',p:'speed',m:'special-attack'},
+  {n:'Naive',p:'speed',m:'special-defense'},{n:'Modest',p:'special-attack',m:'attack'},
+  {n:'Mild',p:'special-attack',m:'defense'},{n:'Quiet',p:'special-attack',m:'speed'},
+  {n:'Bashful',p:null,m:null},{n:'Rash',p:'special-attack',m:'special-defense'},
+  {n:'Calm',p:'special-defense',m:'attack'},{n:'Gentle',p:'special-defense',m:'defense'},
+  {n:'Sassy',p:'special-defense',m:'speed'},{n:'Careful',p:'special-defense',m:'special-attack'},
+  {n:'Quirky',p:null,m:null}
 ];
 
-const STAT_NAMES = { hp:'HP', attack:'Atk', defense:'Def', 'special-attack':'SpA', 'special-defense':'SpD', speed:'Spe' };
-const STAT_KEYS = ['hp','attack','defense','special-attack','special-defense','speed'];
-const STAT_COLORS = ['#FF5959','#F5AC78','#FAE078','#9DB7F5','#A7DB8D','#FA92B2'];
+const TYPE_CHART = {
+  normal:{rock:.5,ghost:0,steel:.5},
+  fire:{fire:.5,water:.5,rock:.5,dragon:.5,grass:2,ice:2,bug:2,steel:2},
+  water:{water:.5,grass:.5,dragon:.5,fire:2,ground:2,rock:2},
+  electric:{electric:.5,grass:.5,dragon:.5,ground:0,flying:2,water:2},
+  grass:{fire:.5,grass:.5,poison:.5,flying:.5,bug:.5,dragon:.5,steel:.5,water:2,ground:2,rock:2},
+  ice:{water:.5,ice:.5,fire:.5,steel:.5,grass:2,ground:2,flying:2,dragon:2},
+  fighting:{poison:.5,bug:.5,psychic:.5,flying:.5,fairy:.5,ghost:0,normal:2,ice:2,rock:2,dark:2,steel:2},
+  poison:{poison:.5,ground:.5,rock:.5,ghost:.5,fairy:2,grass:2,steel:0},
+  ground:{grass:.5,bug:.5,flying:0,fire:2,electric:2,poison:2,rock:2,steel:2},
+  flying:{electric:.5,rock:.5,steel:.5,fighting:2,bug:2,grass:2},
+  psychic:{psychic:.5,steel:.5,dark:0,fighting:2,poison:2},
+  bug:{fire:.5,fighting:.5,flying:.5,ghost:.5,steel:.5,fairy:.5,grass:2,psychic:2,dark:2},
+  rock:{fighting:.5,ground:.5,steel:.5,fire:2,ice:2,flying:2,bug:2},
+  ghost:{normal:0,dark:.5,ghost:2,psychic:2},
+  dragon:{steel:.5,fairy:0,dragon:2},
+  dark:{fighting:.5,dark:.5,fairy:.5,ghost:2,psychic:2},
+  steel:{fire:.5,water:.5,electric:.5,steel:.5,ice:2,rock:2,fairy:2},
+  fairy:{fire:.5,poison:.5,steel:.5,fighting:2,dragon:2,dark:2}
+};
 
-// ===== STATE =====
-let playerTeam = [null,null,null,null,null,null];
-let enemyTeam  = [null,null,null,null,null,null];
-let lockedEnemy = [false,false,false,false,false,false];
+// AI TRAINER DATA
+const AI_TRAINERS = [
+  {
+    id:'brock',name:'Brock',icon:'🪨',type:'Rock',difficulty:'easy',
+    team:[
+      {name:'geodude',id:74,types:['rock','ground'],moves:['rock-throw','tackle','defense-curl','mud-sport'],nature:'Adamant',evs:{},ivs:{},stats:{hp:40,attack:80,defense:100,'special-attack':30,'special-defense':30,speed:20}},
+      {name:'onix',id:95,types:['rock','ground'],moves:['rock-throw','bind','screech','rock-polish'],nature:'Impish',evs:{},ivs:{},stats:{hp:35,attack:45,defense:160,'special-attack':30,'special-defense':45,speed:70}}
+    ]
+  },
+  {
+    id:'misty',name:'Misty',icon:'💧',type:'Water',difficulty:'easy',
+    team:[
+      {name:'staryu',id:120,types:['water'],moves:['water-gun','rapid-spin','swift','recover'],nature:'Timid',evs:{},ivs:{},stats:{hp:30,attack:45,defense:55,'special-attack':70,'special-defense':55,speed:85}},
+      {name:'starmie',id:121,types:['water','psychic'],moves:['surf','psychic','ice-beam','recover'],nature:'Timid',evs:{},ivs:{},stats:{hp:60,attack:75,defense:85,'special-attack':100,'special-defense':85,speed:115}}
+    ]
+  },
+  {
+    id:'surge',name:'Lt. Surge',icon:'⚡',type:'Electric',difficulty:'medium',
+    team:[
+      {name:'voltorb',id:100,types:['electric'],moves:['thunderbolt','swift','screech','light-screen'],nature:'Jolly',evs:{},ivs:{},stats:{hp:40,attack:30,defense:50,'special-attack':55,'special-defense':55,speed:100}},
+      {name:'pikachu',id:25,types:['electric'],moves:['thunderbolt','quick-attack','thunder-wave','iron-tail'],nature:'Hasty',evs:{},ivs:{},stats:{hp:35,attack:55,defense:30,'special-attack':50,'special-defense':40,speed:90}},
+      {name:'raichu',id:26,types:['electric'],moves:['thunderbolt','thunder','quick-attack','focus-blast'],nature:'Timid',evs:{},ivs:{},stats:{hp:60,attack:90,defense:55,'special-attack':90,'special-defense':80,speed:110}}
+    ]
+  },
+  {
+    id:'erika',name:'Erika',icon:'🌿',type:'Grass',difficulty:'medium',
+    team:[
+      {name:'victreebel',id:71,types:['grass','poison'],moves:['razor-leaf','sludge-bomb','sleep-powder','wrap'],nature:'Mild',evs:{},ivs:{},stats:{hp:80,attack:105,defense:65,'special-attack':100,'special-defense':60,speed:70}},
+      {name:'tangela',id:114,types:['grass'],moves:['mega-drain','sleep-powder','bind','ancient-power'],nature:'Bold',evs:{},ivs:{},stats:{hp:65,attack:55,defense:115,'special-attack':100,'special-defense':40,speed:60}},
+      {name:'vileplume',id:45,types:['grass','poison'],moves:['petal-dance','sludge-bomb','sleep-powder','moonlight'],nature:'Modest',evs:{},ivs:{},stats:{hp:75,attack:80,defense:85,'special-attack':110,'special-defense':90,speed:50}}
+    ]
+  },
+  {
+    id:'koga',name:'Koga',icon:'☠️',type:'Poison',difficulty:'hard',
+    team:[
+      {name:'koffing',id:109,types:['poison'],moves:['sludge-bomb','smokescreen','selfdestruct','shadow-ball'],nature:'Bold',evs:{},ivs:{},stats:{hp:40,attack:65,defense:95,'special-attack':60,'special-defense':45,speed:35}},
+      {name:'muk',id:89,types:['poison'],moves:['sludge-bomb','minimize','pound','acid-armor'],nature:'Impish',evs:{},ivs:{},stats:{hp:105,attack:105,defense:75,'special-attack':65,'special-defense':100,speed:50}},
+      {name:'weezing',id:110,types:['poison'],moves:['sludge-bomb','smokescreen','selfdestruct','will-o-wisp'],nature:'Relaxed',evs:{},ivs:{},stats:{hp:65,attack:90,defense:120,'special-attack':85,'special-defense':70,speed:60}},
+      {name:'venomoth',id:49,types:['bug','poison'],moves:['psychic','sleep-powder','silver-wind','bug-buzz'],nature:'Timid',evs:{},ivs:{},stats:{hp:70,attack:65,defense:60,'special-attack':90,'special-defense':75,speed:90}}
+    ]
+  },
+  {
+    id:'lance',name:'Lance',icon:'🐉',type:'Dragon',difficulty:'hard',
+    team:[
+      {name:'gyarados',id:130,types:['water','flying'],moves:['dragon-rage','bite','hyper-beam','surf'],nature:'Adamant',evs:{},ivs:{},stats:{hp:95,attack:125,defense:79,'special-attack':60,'special-defense':100,speed:81}},
+      {name:'aerodactyl',id:142,types:['rock','flying'],moves:['hyper-beam','rock-slide','wing-attack','ancient-power'],nature:'Jolly',evs:{},ivs:{},stats:{hp:80,attack:105,defense:65,'special-attack':60,'special-defense':75,speed:130}},
+      {name:'dragonair',id:148,types:['dragon'],moves:['dragon-rage','hyper-beam','slam','thunder-wave'],nature:'Modest',evs:{},ivs:{},stats:{hp:61,attack:84,defense:65,'special-attack':70,'special-defense':70,speed:70}},
+      {name:'dragonair',id:148,types:['dragon'],moves:['dragon-rage','wrap','agility','hyper-beam'],nature:'Timid',evs:{},ivs:{},stats:{hp:61,attack:84,defense:65,'special-attack':70,'special-defense':70,speed:70}},
+      {name:'dragonite',id:149,types:['dragon','flying'],moves:['hyper-beam','blizzard','fire-blast','thunder'],nature:'Mild',evs:{},ivs:{},stats:{hp:91,attack:134,defense:95,'special-attack':100,'special-defense':100,speed:80}},
+      {name:'dragonite',id:149,types:['dragon','flying'],moves:['outrage','dragon-dance','fire-punch','thunder-punch'],nature:'Adamant',evs:{},ivs:{},stats:{hp:91,attack:134,defense:95,'special-attack':100,'special-defense':100,speed:80}}
+    ]
+  }
+];
 
-let modalPokemon = null;   // raw API data
-let modalEVs = {};
-let modalIVs = {};
-let modalNature = 'Hardy';
-let modalMoves = [null,null,null,null];
-let modalMoveOptions = [];
-let modalTarget = null;    // {side:'player'|'enemy', slot:0-5}
-let searchTimer = null;
-let allPokemonList = [];
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let currentTeam = [null,null,null,null,null,null];
+let currentTeamName = null;
+let loadedTeamId = null;
+let allPokemon = [];
 
-// ===== INIT =====
+// Modal state
+let modalData = null;
+let modalEVs = {}, modalIVs = {}, modalNature = 'Hardy', modalMoves = [null,null,null,null];
+let modalMovePool = [], modalTarget = null;
+
+// Battle state
+let selectedTrainer = null;
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
 async function init() {
-  renderTeamGrids();
   populateNatures();
-  await loadPokemonList();
+  renderTeamGrid();
+  renderSavedTeams();
+  renderTrainers();
+  populateBattleTeamSelect();
+  await loadAllPokemon();
+
+  document.getElementById('searchInput').addEventListener('input', onSearch);
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.search-wrap')) hideDropdown();
+  });
 }
 
-async function loadPokemonList() {
+async function loadAllPokemon() {
   try {
     const r = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025');
     const d = await r.json();
-    allPokemonList = d.results.map((p,i) => ({name:p.name, id:i+1}));
-  } catch(e) { console.warn('Could not load pokémon list'); }
+    allPokemon = d.results.map((p,i) => ({name:p.name,id:i+1}));
+  } catch(e) { console.warn('List load failed'); }
 }
 
-// ===== RENDER GRIDS =====
-function renderTeamGrids() {
-  renderGrid('playerGrid', playerTeam, 'player');
-  renderGrid('enemyGrid', enemyTeam, 'enemy');
-  updateFooter();
+// ══════════════════════════════════════════════════════
+// PAGES
+// ══════════════════════════════════════════════════════
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name === 'battle') { populateBattleTeamSelect(); document.getElementById('battleResultArea').innerHTML = ''; }
 }
 
-function renderGrid(gridId, team, side) {
-  const grid = document.getElementById(gridId);
-  grid.innerHTML = '';
-  team.forEach((poke, i) => {
-    const div = document.createElement('div');
-    if (!poke) {
-      div.className = 'poke-card poke-card-empty';
-      div.innerHTML = `<span class="plus">+</span><span>Empty</span>`;
-    } else {
-      div.className = 'poke-card' + (lockedEnemy[i] && side==='enemy' ? ' locked' : '');
-      const types = poke.types.map(t => `<span class="type-badge type-${t.type.name}">${t.type.name}</span>`).join('');
-      const moves = poke.moves.filter(Boolean).map(m => `<span class="move-pill">${m}</span>`).join('');
-      const locked = side==='enemy' && lockedEnemy[i];
-      div.innerHTML = `
-        <div class="card-actions">
-          <button class="card-btn btn-edit" title="Edit" onclick="openEditModal('${side}',${i})">✏️</button>
-          ${side==='enemy' ? `<button class="card-btn btn-lock ${locked?'locked-on':''}" title="Lock" onclick="toggleLock(${i})">${locked?'🔒':'🔓'}</button>` : ''}
-          <button class="card-btn btn-remove" title="Remove" onclick="removePokemon('${side}',${i})">✕</button>
-        </div>
-        <img class="card-sprite" src="${poke.sprite}" alt="${poke.name}">
-        <div class="card-name">${capitalize(poke.name)}</div>
-        <div class="card-types">${types}</div>
-        <div class="card-stats-mini">
-          <div>HP <span>${poke.stats.hp}</span></div>
-          <div>Atk <span>${poke.stats.attack}</span></div>
-          <div>Def <span>${poke.stats.defense}</span></div>
-          <div>Spd <span>${poke.stats['speed']}</span></div>
-        </div>
-        <div class="card-nature-badge">${poke.nature}</div>
-        <div class="card-moves-mini">${moves || '<span style="font-size:10px;color:var(--muted)">No moves</span>'}</div>
-      `;
-    }
-    grid.appendChild(div);
-  });
-  const id = side==='player' ? 'playerCount' : null;
-  if (id) {
-    const cnt = playerTeam.filter(Boolean).length;
-    document.getElementById(id).textContent = cnt+' / 6';
-  }
-}
-
-// ===== SEARCH =====
-document.getElementById('searchInput').addEventListener('input', function() {
+// ══════════════════════════════════════════════════════
+// SEARCH
+// ══════════════════════════════════════════════════════
+let searchTimer;
+function onSearch() {
   clearTimeout(searchTimer);
   const q = this.value.trim().toLowerCase();
-  if (!q) { hideResults(); return; }
-  searchTimer = setTimeout(() => doSearch(q), 300);
-});
+  if (!q) { hideDropdown(); return; }
+  searchTimer = setTimeout(() => doSearch(q), 280);
+}
+document.getElementById('searchInput').addEventListener('input', onSearch);
 
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.search-wrap')) hideResults();
-});
-
-function hideResults() {
-  document.getElementById('searchResults').classList.remove('visible');
-  document.getElementById('searchResults').innerHTML = '';
+function hideDropdown() {
+  const d = document.getElementById('searchDropdown');
+  d.classList.remove('open');
+  d.innerHTML = '';
 }
 
 async function doSearch(q) {
-  const res = document.getElementById('searchResults');
-  res.classList.add('visible');
-  res.innerHTML = '<div class="search-loading">Searching...</div>';
-
-  const matches = allPokemonList.filter(p =>
-    p.name.includes(q) || String(p.id).includes(q)
-  ).slice(0,8);
-
-  if (!matches.length) { res.innerHTML = '<div class="search-loading">No Pokémon found</div>'; return; }
-
-  res.innerHTML = '';
-  for (const m of matches) {
+  const dd = document.getElementById('searchDropdown');
+  dd.classList.add('open');
+  dd.innerHTML = '<div class="search-empty">Searching…</div>';
+  const hits = allPokemon.filter(p => p.name.includes(q) || String(p.id).startsWith(q)).slice(0,8);
+  if (!hits.length) { dd.innerHTML = '<div class="search-empty">No Pokémon found</div>'; return; }
+  dd.innerHTML = '';
+  hits.forEach(h => {
     const item = document.createElement('div');
-    item.className = 'search-result-item';
-    const spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${m.id}.png`;
+    item.className = 'search-item';
     item.innerHTML = `
-      <img class="result-sprite" src="${spriteUrl}" alt="${m.name}">
-      <div>
-        <div class="result-name">${capitalize(m.name)}</div>
-        <div class="result-num">#${String(m.id).padStart(3,'0')}</div>
-      </div>
-    `;
-    item.addEventListener('click', () => openAddModal(m.name, 'player'));
-    res.appendChild(item);
-  }
+      <img class="si-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${h.id}.png">
+      <div><div class="si-name">${cap(h.name)}</div><div class="si-num">#${String(h.id).padStart(3,'0')}</div></div>`;
+    item.addEventListener('click', () => openDetailModal(h.name));
+    dd.appendChild(item);
+  });
 }
 
-// ===== MODAL =====
-async function openAddModal(pokeName, side, slot=null) {
-  hideResults();
+// ══════════════════════════════════════════════════════
+// TEAM GRID
+// ══════════════════════════════════════════════════════
+function renderTeamGrid() {
+  const grid = document.getElementById('teamGrid');
+  grid.innerHTML = '';
+  const filled = currentTeam.filter(Boolean).length;
+  document.getElementById('teamCount').textContent = filled+' / 6';
+  document.getElementById('footerCount').textContent = filled+'/6';
+  document.getElementById('footerTeamName').textContent = currentTeamName || 'Unsaved';
+
+  currentTeam.forEach((p,i) => {
+    const div = document.createElement('div');
+    if (!p) {
+      div.className = 'poke-card poke-card-empty';
+      div.innerHTML = `<span class="empty-icon">＋</span><span>Empty Slot</span>`;
+    } else {
+      div.className = 'poke-card';
+      const types = p.types.map(t=>`<span class="type-badge type-${t}">${t}</span>`).join('');
+      const moves = p.moves.filter(Boolean).slice(0,4).map(m=>`<span class="move-pill">${cap(m.replace(/-/g,' '))}</span>`).join('');
+      const totalEV = Object.values(p.evs||{}).reduce((a,b)=>a+b,0);
+      div.innerHTML = `
+        <div class="card-actions">
+          <button class="card-btn btn-edit" onclick="openEditModal(${i})">✏️</button>
+          <button class="card-btn btn-remove" onclick="removePoke(${i})">✕</button>
+        </div>
+        <img class="card-sprite" src="${p.sprite}">
+        <div class="card-name">${cap(p.name)}</div>
+        <div class="card-types">${types}</div>
+        <div class="card-nature">${p.nature}</div>
+        <div class="card-moves">${moves||'<span style="font-size:10px;color:var(--muted2)">No moves set</span>'}</div>
+        <div class="card-eviv">EVs: ${totalEV}/510 · IVs: ${avgIV(p.ivs)}/31 avg</div>`;
+    }
+    grid.appendChild(div);
+  });
+}
+
+function avgIV(ivs) {
+  if (!ivs) return 31;
+  const vals = Object.values(ivs);
+  return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : 31;
+}
+
+function removePoke(i) {
+  currentTeam[i] = null;
+  renderTeamGrid();
+}
+
+// ══════════════════════════════════════════════════════
+// MODAL — OPEN
+// ══════════════════════════════════════════════════════
+async function openDetailModal(pokeName) {
+  hideDropdown();
   document.getElementById('searchInput').value = '';
 
-  // find empty slot for player
-  let targetSlot = slot;
-  if (targetSlot === null) {
-    if (side === 'player') {
-      targetSlot = playerTeam.indexOf(null);
-      if (targetSlot === -1) { showToast('Your team is full! (6/6)'); return; }
-    } else {
-      targetSlot = enemyTeam.indexOf(null);
-      if (targetSlot === -1) targetSlot = 0;
-    }
-  }
-  modalTarget = {side, slot: targetSlot};
+  const slot = currentTeam.indexOf(null);
+  if (slot === -1) { showToast('Team is full! Remove a Pokémon first.'); return; }
+  modalTarget = {slot, editing: false};
 
-  showToast('Loading Pokémon data...');
+  await loadAndShowModal(pokeName);
+  document.getElementById('confirmBtn').textContent = '✓ Add to Team';
+}
+
+async function openEditModal(slot) {
+  const p = currentTeam[slot];
+  if (!p) return;
+  modalTarget = {slot, editing: true};
+  await loadAndShowModal(p.name, p);
+  document.getElementById('confirmBtn').textContent = '✓ Save Changes';
+}
+
+async function loadAndShowModal(pokeName, existing=null) {
+  showToast('Loading…');
   try {
-    const [pokeRes, speciesRes] = await Promise.all([
-      fetch(`https://pokeapi.co/api/v2/pokemon/${pokeName}`),
-      fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokeName}`)
-    ]);
-    const pokeData = await pokeRes.json();
-    const speciesData = await speciesRes.json();
+    const data = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokeName}`).then(r=>r.json());
+    modalData = data;
 
-    modalPokemon = pokeData;
-    modalEVs = { hp:0, attack:0, defense:0, 'special-attack':0, 'special-defense':0, speed:0 };
-    modalIVs = { hp:31, attack:31, defense:31, 'special-attack':31, 'special-defense':31, speed:31 };
-    modalNature = 'Hardy';
-    modalMoves = [null,null,null,null];
-
-    // Get moves
-    const movePool = pokeData.moves.slice(0,80).map(m => m.move.name);
-    modalMoveOptions = movePool;
-    if (movePool.length >= 4) {
-      modalMoves = movePool.slice(0,4);
+    if (existing) {
+      modalEVs = {...existing.evs};
+      modalIVs = {...existing.ivs};
+      modalNature = existing.nature;
+      modalMoves = [...existing.moves, null, null, null, null].slice(0,4);
     } else {
-      for (let i=0;i<4;i++) modalMoves[i] = movePool[i] || null;
+      modalEVs = Object.fromEntries(STAT_KEYS.map(k=>[k,0]));
+      modalIVs = Object.fromEntries(STAT_KEYS.map(k=>[k,31]));
+      modalNature = 'Hardy';
+      const pool = data.moves.slice(0,60).map(m=>m.move.name);
+      modalMoves = pool.slice(0,4);
     }
 
-    populateModal(pokeData);
-    document.getElementById('modalOverlay').classList.add('open');
+    modalMovePool = data.moves.slice(0,100).map(m=>m.move.name);
+
+    const sprite = data.sprites.other?.['official-artwork']?.front_default || data.sprites.front_default;
+    document.getElementById('mSprite').src = sprite;
+    document.getElementById('mNum').textContent = '#'+String(data.id).padStart(3,'0');
+    document.getElementById('mName').textContent = cap(data.name);
+    document.getElementById('mTypes').innerHTML = data.types.map(t=>`<span class="type-badge type-${t.type.name}">${t.type.name}</span>`).join('');
+
+    renderStatTab(data);
+    renderIVTab();
+    renderMovesTab();
+    renderNatureTab();
     switchTab('stats');
-    document.getElementById('modal').scrollTop = 0;
-  } catch(e) {
-    showToast('Failed to load Pokémon data');
-    console.error(e);
-  }
-}
-
-async function openEditModal(side, slot) {
-  const team = side === 'player' ? playerTeam : enemyTeam;
-  const poke = team[slot];
-  if (!poke) return;
-  modalTarget = {side, slot};
-
-  try {
-    const pokeData = await fetch(`https://pokeapi.co/api/v2/pokemon/${poke.name}`).then(r=>r.json());
-    modalPokemon = pokeData;
-    modalEVs = {...poke.evs};
-    modalIVs = {...poke.ivs};
-    modalNature = poke.nature;
-    modalMoves = [...poke.moves];
-
-    const movePool = pokeData.moves.slice(0,80).map(m => m.move.name);
-    modalMoveOptions = movePool;
-
-    populateModal(pokeData);
-    document.getElementById('modalOverlay').classList.add('open');
-
-    // set nature
-    document.getElementById('natureSelect').value = modalNature;
-    updateNatureSummary();
-
-    // set EVs
-    STAT_KEYS.forEach(k => {
-      const inp = document.getElementById('ev_'+k);
-      if (inp) inp.value = modalEVs[k] || 0;
-    });
-    updateEVTotal();
-
-    // set IVs
-    STAT_KEYS.forEach(k => {
-      const inp = document.getElementById('iv_'+k);
-      if (inp) { inp.value = modalIVs[k] ?? 31; document.getElementById('ivval_'+k).textContent = modalIVs[k] ?? 31; }
-    });
-
-    // set moves
-    for (let i=0;i<4;i++) {
-      const sel = document.getElementById('move_'+i);
-      if (sel) sel.value = modalMoves[i] || '';
-    }
-
-    // change confirm button
-    document.querySelector('.btn-confirm').textContent = '✓ Save Changes';
-
-    document.getElementById('modal').scrollTop = 0;
-  } catch(e) { showToast('Could not load Pokémon'); }
-}
-
-function populateModal(data) {
-  const sprite = data.sprites.other?.['official-artwork']?.front_default || data.sprites.front_default;
-  document.getElementById('modalSprite').src = sprite;
-  document.getElementById('modalNum').textContent = '#' + String(data.id).padStart(3,'0');
-  document.getElementById('modalName').textContent = capitalize(data.name);
-
-  const typesEl = document.getElementById('modalTypes');
-  typesEl.innerHTML = data.types.map(t => `<span class="type-badge type-${t.type.name}">${t.type.name}</span>`).join('');
-
-  // stats
-  const statsEl = document.getElementById('statsContainer');
-  statsEl.innerHTML = '';
-  data.base_stat = {};
-  data.stats.forEach((s,i) => {
-    const key = s.stat.name;
-    data.base_stat[key] = s.base_stat;
-    const pct = Math.min(100, Math.round(s.base_stat / 255 * 100));
-    statsEl.innerHTML += `
-      <div class="stat-row">
-        <span class="stat-label">${STAT_NAMES[key]||key}</span>
-        <span class="stat-base">${s.base_stat}</span>
-        <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${pct}%;background:${STAT_COLORS[i]}"></div></div>
-        <input class="stat-ev-input" type="number" min="0" max="252" id="ev_${key}" value="${modalEVs[key]||0}" placeholder="EV" onchange="updateEV('${key}',this.value)">
-      </div>`;
-  });
-
-  // IVs
-  const ivsEl = document.getElementById('ivsContainer');
-  ivsEl.innerHTML = '';
-  STAT_KEYS.forEach(k => {
-    ivsEl.innerHTML += `
-      <div class="iv-row">
-        <label>${STAT_NAMES[k]||k}</label>
-        <input type="range" min="0" max="31" value="${modalIVs[k]??31}" id="iv_${k}" oninput="updateIV('${k}',this.value)">
-        <span class="iv-val" id="ivval_${k}">${modalIVs[k]??31}</span>
-      </div>`;
-  });
-
-  // moves
-  const movesEl = document.getElementById('movesContainer');
-  movesEl.innerHTML = '';
-  for (let i=0;i<4;i++) {
-    movesEl.innerHTML += `
-      <div class="move-slot">
-        <label>Move ${i+1}</label>
-        <select class="form-select-move" id="move_${i}" onchange="updateMove(${i},this.value)">
-          <option value="">— None —</option>
-          ${modalMoveOptions.map(m => `<option value="${m}" ${modalMoves[i]===m?'selected':''}>${capitalize(m.replace(/-/g,' '))}</option>`).join('')}
-        </select>
-      </div>`;
-  }
-
-  // nature
-  updateEVTotal();
-  updateNatureSummary();
-  document.querySelector('.btn-confirm').textContent = '✓ Add to Team';
-}
-
-function populateNatures() {
-  const sel = document.getElementById('natureSelect');
-  NATURES.forEach(n => {
-    const opt = document.createElement('option');
-    opt.value = n.name;
-    opt.textContent = n.name + (n.plus ? ` (+${STAT_NAMES[n.plus]||n.plus} / -${STAT_NAMES[n.minus]||n.minus})` : ' (Neutral)');
-    sel.appendChild(opt);
-  });
-  sel.addEventListener('change', function() { modalNature = this.value; updateNatureSummary(); });
-}
-
-function updateNatureSummary() {
-  const n = NATURES.find(x => x.name === modalNature);
-  const el = document.getElementById('natureSummary');
-  if (!n) return;
-  if (!n.plus) { el.textContent = `${n.name} — No stat changes`; el.style.color = 'var(--muted)'; }
-  else el.innerHTML = `${n.name} — <span style="color:var(--green)">+10% ${STAT_NAMES[n.plus]||n.plus}</span> / <span style="color:var(--red)">-10% ${STAT_NAMES[n.minus]||n.minus}</span>`;
-}
-
-function updateEV(key, val) {
-  const v = Math.max(0, Math.min(252, parseInt(val)||0));
-  modalEVs[key] = v;
-  const total = Object.values(modalEVs).reduce((a,b)=>a+b,0);
-  if (total > 510) { modalEVs[key] = Math.max(0, v - (total-510)); document.getElementById('ev_'+key).value = modalEVs[key]; }
-  updateEVTotal();
-}
-
-function updateEVTotal() {
-  const total = Object.values(modalEVs).reduce((a,b)=>a+b,0);
-  const pct = Math.min(100, total/510*100);
-  const bar = document.getElementById('evTotalBar');
-  bar.style.width = pct+'%';
-  bar.className = 'ev-total-bar-fill' + (total>=510?' maxed':'');
-  document.getElementById('evTotalText').textContent = total+' / 510';
-}
-
-function updateIV(key, val) {
-  modalIVs[key] = parseInt(val);
-  document.getElementById('ivval_'+key).textContent = val;
-}
-
-function updateMove(idx, val) {
-  modalMoves[idx] = val || null;
-}
-
-function setAllIVs(val) {
-  STAT_KEYS.forEach(k => {
-    modalIVs[k] = val;
-    const inp = document.getElementById('iv_'+k);
-    if (inp) { inp.value = val; document.getElementById('ivval_'+k).textContent = val; }
-  });
-}
-function randomizeAllIVs() {
-  STAT_KEYS.forEach(k => {
-    const v = Math.floor(Math.random()*32);
-    modalIVs[k] = v;
-    const inp = document.getElementById('iv_'+k);
-    if (inp) { inp.value = v; document.getElementById('ivval_'+k).textContent = v; }
-  });
-}
-
-function confirmPokemon() {
-  if (!modalPokemon || !modalTarget) return;
-  const statsObj = {};
-  STAT_KEYS.forEach(k => { const s = modalPokemon.stats.find(x=>x.stat.name===k); statsObj[k] = s ? s.base_stat : 0; });
-
-  const pokemon = {
-    name: modalPokemon.name,
-    id: modalPokemon.id,
-    sprite: modalPokemon.sprites.front_default,
-    types: modalPokemon.types,
-    stats: statsObj,
-    evs: {...modalEVs},
-    ivs: {...modalIVs},
-    nature: modalNature,
-    moves: [...modalMoves].filter(Boolean)
-  };
-
-  if (modalTarget.side === 'player') playerTeam[modalTarget.slot] = pokemon;
-  else enemyTeam[modalTarget.slot] = pokemon;
-
-  closeModal();
-  renderTeamGrids();
-  showToast(`${capitalize(pokemon.name)} added to ${modalTarget.side === 'player' ? 'your' : 'enemy'} team!`);
+    document.getElementById('detailOverlay').classList.add('open');
+  } catch(e) { showToast('Failed to load Pokémon'); }
 }
 
 function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('detailOverlay').classList.remove('open');
   modalTarget = null;
 }
-
-document.getElementById('modalOverlay').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
+document.getElementById('detailOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('detailOverlay')) closeModal();
 });
 
-// ===== TABS =====
+// ══════════════════════════════════════════════════════
+// MODAL TABS
+// ══════════════════════════════════════════════════════
 function switchTab(name) {
-  document.querySelectorAll('.tab-btn').forEach((b,i) => {
-    const tabs = ['stats','ivs','moves','nature'];
-    b.classList.toggle('active', tabs[i]===name);
-  });
+  const tabs = ['stats','ivs','moves','nature'];
+  document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active', tabs[i]===name));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
 }
 
-// ===== REMOVE & LOCK =====
-function removePokemon(side, slot) {
-  if (side === 'player') playerTeam[slot] = null;
-  else { enemyTeam[slot] = null; lockedEnemy[slot] = false; }
-  renderTeamGrids();
+function renderStatTab(data) {
+  const c = document.getElementById('statsContainer');
+  c.innerHTML = '';
+  data.stats.forEach((s,i) => {
+    const k = s.stat.name;
+    const pct = Math.min(100, Math.round(s.base_stat/255*100));
+    c.innerHTML += `
+      <div class="stat-row">
+        <span class="stat-lbl">${STAT_LABELS[k]||k}</span>
+        <span class="stat-base">${s.base_stat}</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${STAT_COLORS[i]}"></div></div>
+        <input class="ev-inp" type="number" min="0" max="252" id="ev_${k}" value="${modalEVs[k]||0}" oninput="onEV('${k}',this.value)" placeholder="EV">
+      </div>`;
+  });
+  updateEVTotal();
 }
 
-function toggleLock(slot) {
-  lockedEnemy[slot] = !lockedEnemy[slot];
-  renderTeamGrids();
+function renderIVTab() {
+  const c = document.getElementById('ivsContainer');
+  c.innerHTML = '';
+  STAT_KEYS.forEach(k => {
+    const v = modalIVs[k]??31;
+    c.innerHTML += `
+      <div class="iv-row">
+        <label>${STAT_LABELS[k]||k}</label>
+        <input type="range" min="0" max="31" value="${v}" id="iv_${k}" oninput="onIV('${k}',this.value)">
+        <span class="iv-val" id="ivv_${k}">${v}</span>
+      </div>`;
+  });
 }
 
-// ===== RANDOMIZE ENEMY =====
-async function randomizeEnemy() {
-  if (!allPokemonList.length) { showToast('Loading Pokémon list...'); return; }
-  const btn = document.getElementById('randomizeBtn');
-  btn.disabled = true;
-  btn.textContent = '⏳ Generating...';
+function renderMovesTab() {
+  const c = document.getElementById('movesContainer');
+  c.innerHTML = '';
+  for (let i=0;i<4;i++) {
+    c.innerHTML += `
+      <div class="move-slot">
+        <label>Move ${i+1}</label>
+        <select class="form-sel" id="mov_${i}" onchange="onMove(${i},this.value)">
+          <option value="">— None —</option>
+          ${modalMovePool.map(m=>`<option value="${m}" ${modalMoves[i]===m?'selected':''}>${cap(m.replace(/-/g,' '))}</option>`).join('')}
+        </select>
+      </div>`;
+  }
+}
 
-  const available = allPokemonList.filter(p => p.id <= 898);
-  const picks = [];
-  while (picks.length < 6) {
-    const r = available[Math.floor(Math.random()*available.length)];
-    if (!picks.find(p=>p.id===r.id)) picks.push(r);
+function renderNatureTab() {
+  document.getElementById('natureSelect').value = modalNature;
+  updateNatureSummary();
+}
+
+function onEV(k, v) {
+  modalEVs[k] = Math.max(0,Math.min(252,parseInt(v)||0));
+  const t = Object.values(modalEVs).reduce((a,b)=>a+b,0);
+  if (t > 510) { modalEVs[k] = Math.max(0, modalEVs[k]-(t-510)); document.getElementById('ev_'+k).value = modalEVs[k]; }
+  updateEVTotal();
+}
+function updateEVTotal() {
+  const t = Object.values(modalEVs).reduce((a,b)=>a+b,0);
+  const pct = Math.min(100,t/510*100);
+  document.getElementById('evTotalFill').style.width = pct+'%';
+  document.getElementById('evTotalFill').className = 'ev-bar-fill'+(t>=510?' maxed':'');
+  document.getElementById('evTotalText').textContent = t+' / 510';
+}
+function onIV(k,v) { modalIVs[k]=parseInt(v); document.getElementById('ivv_'+k).textContent=v; }
+function onMove(i,v) { modalMoves[i]=v||null; }
+function onNatureChange() { modalNature = document.getElementById('natureSelect').value; updateNatureSummary(); }
+function updateNatureSummary() {
+  const n = NATURES.find(x=>x.n===modalNature);
+  const el = document.getElementById('natureSummary');
+  if (!n) return;
+  if (!n.p) el.textContent = `${n.n} — No stat changes`;
+  else el.innerHTML = `${n.n} — <span style="color:var(--green);font-weight:800">+10% ${STAT_LABELS[n.p]}</span> / <span style="color:var(--red);font-weight:800">-10% ${STAT_LABELS[n.m]}</span>`;
+}
+function populateNatures() {
+  const sel = document.getElementById('natureSelect');
+  NATURES.forEach(n => {
+    const o = document.createElement('option');
+    o.value = n.n;
+    o.textContent = n.n + (n.p ? ` (+${STAT_LABELS[n.p]}/-${STAT_LABELS[n.m]})` : ' (Neutral)');
+    sel.appendChild(o);
+  });
+}
+function setAllIVs(v) {
+  STAT_KEYS.forEach(k => { modalIVs[k]=v; const inp=document.getElementById('iv_'+k); if(inp){inp.value=v; document.getElementById('ivv_'+k).textContent=v;} });
+}
+function randomIVs() { STAT_KEYS.forEach(k => { const v=Math.floor(Math.random()*32); modalIVs[k]=v; const inp=document.getElementById('iv_'+k); if(inp){inp.value=v;document.getElementById('ivv_'+k).textContent=v;} }); }
+
+function confirmPokemon() {
+  if (!modalData || !modalTarget) return;
+
+  const isEditing = !!modalTarget.editing;
+
+  const statsObj = Object.fromEntries(
+    STAT_KEYS.map(k => [k, (modalData.stats.find(s => s.stat.name === k) || { base_stat: 0 }).base_stat])
+  );
+
+  const poke = {
+    name: modalData.name,
+    id: modalData.id,
+    sprite: modalData.sprites.front_default,
+    types: modalData.types.map(t => t.type.name),
+    stats: statsObj,
+    evs: { ...modalEVs },
+    ivs: { ...modalIVs },
+    nature: modalNature,
+    moves: modalMoves.filter(Boolean)
+  };
+
+  currentTeam[modalTarget.slot] = poke;
+  showToast(`${cap(poke.name)} ${isEditing ? 'updated' : 'added'}!`);
+  closeModal();
+  renderTeamGrid();
+}
+
+// ══════════════════════════════════════════════════════
+// LOCAL STORAGE — TEAMS
+// ══════════════════════════════════════════════════════
+function getTeams() {
+  try { return JSON.parse(localStorage.getItem('poketeams') || '[]'); } catch { return []; }
+}
+function saveTeams(teams) {
+  localStorage.setItem('poketeams', JSON.stringify(teams));
+}
+
+function openSaveModal() {
+  if (!currentTeam.some(Boolean)) { showToast('Add at least one Pokémon first!'); return; }
+  const teams = getTeams();
+  const sel = document.getElementById('overwriteSelect');
+  sel.innerHTML = '<option value="">— Save as new team —</option>';
+  teams.forEach(t => {
+    const o = document.createElement('option');
+    o.value = t.id; o.textContent = t.name;
+    sel.appendChild(o);
+  });
+  document.getElementById('saveNameInput').value = currentTeamName || '';
+  document.getElementById('saveOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('saveNameInput').focus(), 100);
+}
+function closeSaveModal() { document.getElementById('saveOverlay').classList.remove('open'); }
+document.getElementById('saveOverlay').addEventListener('click', e => { if(e.target===document.getElementById('saveOverlay')) closeSaveModal(); });
+
+function confirmSave() {
+  const nameInput = document.getElementById('saveNameInput').value.trim();
+  const overwriteId = document.getElementById('overwriteSelect').value;
+  let teams = getTeams();
+
+  if (overwriteId) {
+    const idx = teams.findIndex(t=>t.id===overwriteId);
+    if (idx !== -1) {
+      teams[idx].team = currentTeam.map(p=>p);
+      teams[idx].name = nameInput || teams[idx].name;
+      teams[idx].updated = Date.now();
+      currentTeamName = teams[idx].name;
+      loadedTeamId = teams[idx].id;
+      showToast(`Team "${teams[idx].name}" overwritten!`);
+    }
+  } else {
+    if (!nameInput) { showToast('Enter a team name!'); return; }
+    const newTeam = {
+      id: 'team_'+Date.now(),
+      name: nameInput,
+      team: currentTeam.map(p=>p),
+      created: Date.now(),
+      updated: Date.now()
+    };
+    teams.push(newTeam);
+    currentTeamName = nameInput;
+    loadedTeamId = newTeam.id;
+    showToast(`Team "${nameInput}" saved!`);
   }
 
-  for (let i=0;i<6;i++) {
-    if (lockedEnemy[i] && enemyTeam[i]) continue;
-    try {
-      const data = await fetch(`https://pokeapi.co/api/v2/pokemon/${picks[i].name}`).then(r=>r.json());
-      const statsObj = {};
-      STAT_KEYS.forEach(k => { const s = data.stats.find(x=>x.stat.name===k); statsObj[k] = s ? s.base_stat : 0; });
-      const movePool = data.moves.slice(0,20).map(m=>m.move.name);
-      const moves = shuffleArr(movePool).slice(0,4);
-      const randomNature = NATURES[Math.floor(Math.random()*NATURES.length)].name;
-      const evs = {}; STAT_KEYS.forEach(k => evs[k]=0);
-      const ivs = {}; STAT_KEYS.forEach(k => ivs[k]=Math.floor(Math.random()*32));
+  saveTeams(teams);
+  closeSaveModal();
+  renderSavedTeams();
+  renderTeamGrid();
+  populateBattleTeamSelect();
+}
 
-      enemyTeam[i] = {
-        name: data.name, id: data.id,
-        sprite: data.sprites.front_default,
-        types: data.types, stats: statsObj,
-        evs, ivs, nature: randomNature, moves
-      };
-    } catch(e) { console.warn('Error loading enemy mon'); }
+function renderSavedTeams() {
+  const teams = getTeams();
+  const el = document.getElementById('savedTeamsList');
+  if (!teams.length) { el.innerHTML = '<div class="no-teams">No saved teams yet.<br>Build a team and save it!</div>'; return; }
+  el.innerHTML = '';
+  teams.forEach(t => {
+    const filled = t.team.filter(Boolean);
+    const card = document.createElement('div');
+    card.className = 'saved-team-card' + (loadedTeamId===t.id?' loaded':'');
+    card.innerHTML = `
+      <div class="stc-name">${t.name}</div>
+      <div class="stc-count">${filled.length} / 6 Pokémon</div>
+      <div class="stc-sprites">${filled.map(p=>`<img class="stc-sprite" src="${p.sprite}" title="${cap(p.name)}">`).join('')}</div>
+      <div class="stc-actions">
+        <button class="stc-btn" onclick="loadTeam('${t.id}')">📂 Load</button>
+        <button class="stc-btn danger" onclick="deleteTeam('${t.id}')">🗑 Delete</button>
+      </div>`;
+    el.appendChild(card);
+  });
+}
+
+function loadTeam(id) {
+  const teams = getTeams();
+  const t = teams.find(x=>x.id===id);
+  if (!t) return;
+  currentTeam = [...t.team, null,null,null,null,null,null].slice(0,6);
+  currentTeamName = t.name;
+  loadedTeamId = id;
+  renderTeamGrid();
+  renderSavedTeams();
+  showToast(`Loaded "${t.name}"!`);
+  showPage('builder');
+}
+
+function deleteTeam(id) {
+  if (!confirm('Delete this team?')) return;
+  let teams = getTeams();
+  const t = teams.find(x=>x.id===id);
+  teams = teams.filter(x=>x.id!==id);
+  saveTeams(teams);
+  if (loadedTeamId === id) { loadedTeamId = null; currentTeamName = null; renderTeamGrid(); }
+  renderSavedTeams();
+  populateBattleTeamSelect();
+  showToast(`"${t?.name}" deleted`);
+}
+
+// ══════════════════════════════════════════════════════
+// BATTLE SIMULATION
+// ══════════════════════════════════════════════════════
+function renderTrainers() {
+  const grid = document.getElementById('trainerGrid');
+  grid.innerHTML = '';
+  AI_TRAINERS.forEach(tr => {
+    const card = document.createElement('div');
+    card.className = 'trainer-card';
+    card.setAttribute('data-id', tr.id);
+    const diff = tr.difficulty;
+    const sprites = tr.team.slice(0,6).map(p=>`<img class="trainer-mon-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png">`).join('');
+    card.innerHTML = `
+      <span class="trainer-badge badge-${diff==='easy'?'easy':diff==='medium'?'med':'hard'}">${diff.toUpperCase()}</span>
+      <span class="trainer-icon">${tr.icon}</span>
+      <div class="trainer-name">${tr.name}</div>
+      <div class="trainer-type">${tr.type}-type Trainer · ${tr.team.length} Pokémon</div>
+      <div class="trainer-mons">${sprites}</div>`;
+    card.addEventListener('click', () => selectTrainer(tr.id));
+    grid.appendChild(card);
+  });
+}
+
+function selectTrainer(id) {
+  selectedTrainer = id;
+  document.querySelectorAll('.trainer-card').forEach(c => c.classList.toggle('selected', c.dataset.id===id));
+}
+
+function populateBattleTeamSelect() {
+  const sel = document.getElementById('battleTeamSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Select a saved team —</option>';
+  getTeams().forEach(t => {
+    const o = document.createElement('option');
+    o.value = t.id; o.textContent = t.name+' ('+t.team.filter(Boolean).length+' Pokémon)';
+    sel.appendChild(o);
+  });
+  if (cur) sel.value = cur;
+
+  // Also add "current unsaved team" option if has mons
+  if (currentTeam.some(Boolean) && !loadedTeamId) {
+    const o = document.createElement('option');
+    o.value = '__current__'; o.textContent = '⚡ Current unsaved team';
+    sel.insertBefore(o, sel.children[1]);
+  }
+}
+
+function simulateBattle() {
+  console.log('simulateBattle clicked', {
+  teamSelVal: document.getElementById('battleTeamSelect')?.value,
+  selectedTrainer
+});
+  const teamSelVal = document.getElementById('battleTeamSelect').value;
+  if (!teamSelVal) { showToast('Select a team first!'); return; }
+  if (!selectedTrainer) { showToast('Choose an AI Trainer to battle!'); return; }
+
+  let playerTeam;
+  if (teamSelVal === '__current__') {
+    playerTeam = currentTeam.filter(Boolean);
+  } else {
+    const saved = getTeams().find(t=>t.id===teamSelVal);
+    if (!saved) { showToast('Team not found'); return; }
+    playerTeam = saved.team.filter(Boolean);
   }
 
-  btn.disabled = false;
-  btn.textContent = '🎲 Randomize';
-  renderTeamGrids();
-  showToast('Enemy team randomized!');
+  const trainer = AI_TRAINERS.find(t=>t.id===selectedTrainer);
+  if (!playerTeam.length) { showToast('No Pokémon in team!'); return; }
+
+  const result = runSimulation(playerTeam, trainer.team);
+  renderBattleResult(result, playerTeam, trainer);
 }
 
-// ===== FOOTER =====
-function updateFooter() {
-  const pc = playerTeam.filter(Boolean).length;
-  const ec = enemyTeam.filter(Boolean).length;
-  const fp = document.getElementById('footerPlayer');
-  const fe = document.getElementById('footerEnemy');
-  fp.textContent = pc+'/6';
-  fe.textContent = ec+'/6';
-  fp.className = 'count-val' + (pc===6?' full':'');
-  fe.className = 'count-val' + (ec===6?' full':'');
-  document.getElementById('startBtn').disabled = pc < 1 || ec < 1;
+function calcEffectiveness(moveType, defTypes) {
+  let eff = 1;
+  defTypes.forEach(dt => eff *= (TYPE_CHART[moveType]?.[dt] ?? 1));
+  return eff;
 }
 
-// ===== BATTLE =====
-function startBattle() {
-  const pc = playerTeam.filter(Boolean).length;
-  const ec = enemyTeam.filter(Boolean).length;
-  if (pc < 1 || ec < 1) return;
-  // Store teams in sessionStorage for battle screen
-  sessionStorage.setItem('playerTeam', JSON.stringify(playerTeam.filter(Boolean)));
-  sessionStorage.setItem('enemyTeam', JSON.stringify(enemyTeam.filter(Boolean)));
-  showToast('Loading battle...');
-  setTimeout(() => { window.location.href = 'battle.html'; }, 800);
+function scorePokemon(attacker, defender) {
+  // Score = best move score attacker can hit defender with
+  const atkTypes = attacker.types || [];
+  const defTypes = defender.types || [];
+  const atkStats = attacker.stats || {};
+  const defStats = defender.stats || {};
+
+  const moves = attacker.moves || [];
+  let bestScore = 0;
+
+  moves.forEach(moveName => {
+    if (!moveName) return;
+    // Infer move type from pokemon types (simplified)
+    const moveType = atkTypes[0] || 'normal';
+    const eff = calcEffectiveness(moveType, defTypes);
+    const stab = atkTypes.includes(moveType) ? 1.5 : 1;
+    const atk = Math.max(atkStats.attack||50, atkStats['special-attack']||50);
+    const def = Math.min(defStats.defense||50, defStats['special-defense']||50);
+    const power = 80; // default move power
+    const score = (power * atk / def) * eff * stab;
+    if (score > bestScore) bestScore = score;
+  });
+
+  // Factor in speed for who attacks first
+  const speedAdv = (atkStats.speed||50) > (defStats.speed||50) ? 1.1 : 0.95;
+  // Factor in bulk
+  const bulk = (defStats.hp||50) * ((defStats.defense||50 + defStats['special-defense']||50) / 100);
+  return bestScore * speedAdv / (bulk * 0.01 + 1);
 }
 
-// ===== HELPERS =====
-function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
-function shuffleArr(arr) { return [...arr].sort(()=>Math.random()-0.5); }
+function runSimulation(playerTeam, enemyTeam) {
+  const matchups = [];
+  let playerScore = 0, enemyScore = 0;
+  const log = [];
+
+  // Round-robin matchup scoring
+  playerTeam.forEach(p => {
+    let bestVsEnemy = 0;
+    enemyTeam.forEach(e => {
+      const ps = scorePokemon(p, e);
+      const es = scorePokemon(e, p);
+      bestVsEnemy = Math.max(bestVsEnemy, ps - es);
+    });
+    playerScore += bestVsEnemy;
+  });
+
+  enemyTeam.forEach(e => {
+    let bestVsPlayer = 0;
+    playerTeam.forEach(p => {
+      const ps = scorePokemon(e, p);
+      const es = scorePokemon(p, e);
+      bestVsPlayer = Math.max(bestVsPlayer, ps - es);
+    });
+    enemyScore += bestVsPlayer;
+  });
+
+  // Simulate individual matchups for display
+  const usedP = new Set(), usedE = new Set();
+  for (let i=0; i<Math.min(playerTeam.length, enemyTeam.length, 6); i++) {
+    let bestP = -1, bestE = -1, bestDiff = -Infinity;
+    playerTeam.forEach((p,pi) => {
+      if (usedP.has(pi)) return;
+      enemyTeam.forEach((e,ei) => {
+        if (usedE.has(ei)) return;
+        const diff = scorePokemon(p,e) - scorePokemon(e,p);
+        if (diff > bestDiff) { bestDiff=diff; bestP=pi; bestE=ei; }
+      });
+    });
+    if (bestP === -1) break;
+    usedP.add(bestP); usedE.add(bestE);
+    const p = playerTeam[bestP], e = enemyTeam[bestE];
+    const win = bestDiff > 0;
+    matchups.push({player:p, enemy:e, playerWins:win, diff:bestDiff});
+
+    const verb = win ? 'defeated' : 'lost to';
+    log.push({ text:`${cap(p.name)} ${verb} ${cap(e.name)}`, type: win?'win':'lose' });
+  }
+
+  // Add variance (15%)
+  const variance = (Math.random() * 0.3) - 0.15;
+  const finalPlayerScore = playerScore * (1 + variance);
+  const playerWins = finalPlayerScore > enemyScore;
+
+  // MVP = player pokemon with best overall score
+  let mvp = playerTeam[0], mvpScore = 0;
+  playerTeam.forEach(p => {
+    let s = 0;
+    enemyTeam.forEach(e => s += scorePokemon(p,e));
+    if (s > mvpScore) { mvpScore = s; mvp = p; }
+  });
+
+  return { playerWins, matchups, log, mvp, playerScore: finalPlayerScore, enemyScore };
+}
+
+function renderBattleResult(result, playerTeam, trainer) {
+  const area = document.getElementById('battleResultArea');
+  const winPct = Math.round(result.playerScore / (result.playerScore + result.enemyScore) * 100);
+
+  const matchupCards = result.matchups.map(m => `
+    <div class="matchup-card">
+      <img src="${m.player.sprite}" title="${cap(m.player.name)}">
+      <div style="font-size:14px">${m.playerWins?'🏆':'💀'}</div>
+      <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${m.enemy.id}.png" title="${cap(m.enemy.name)}">
+      <div class="matchup-result ${m.playerWins?'matchup-win':'matchup-lose'}">${cap(m.player.name)} ${m.playerWins?'won':'lost'}</div>
+    </div>`).join('');
+
+  const logItems = result.log.map(l => `<li class="${l.type}">${l.text}</li>`).join('');
+
+  area.innerHTML = `
+    <div class="battle-result">
+      <div class="result-banner ${result.playerWins?'result-win':'result-lose'}">
+        ${result.playerWins ? '🏆 VICTORY!' : '💀 DEFEATED!'}
+        <div style="font-family:'DM Sans';font-size:13px;margin-top:8px;opacity:.8">
+          Score advantage: ${winPct}% vs ${100-winPct}%
+        </div>
+      </div>
+
+      <div class="mvp-section">
+        <img class="mvp-sprite" src="${result.mvp.sprite}">
+        <div>
+          <div class="mvp-label">⭐ MVP</div>
+          <div class="mvp-name">${cap(result.mvp.name)}</div>
+          <div class="mvp-reason">Best overall type coverage against ${trainer.name}'s team</div>
+        </div>
+      </div>
+
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;">Key Matchups</div>
+      <div class="matchup-grid">${matchupCards}</div>
+
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:.75rem 0 .25rem;">Battle Log</div>
+      <ul class="log-list">${logItems}</ul>
+
+      <div style="margin-top:1.25rem;display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="simulateBattle()">🔄 Rematch</button>
+        <button class="btn btn-ghost" onclick="showPage('builder')">← Back to Builder</button>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
+  setTimeout(() => t.classList.remove('show'), 2300);
 }
 
+function cap(s) { return s ? s[0].toUpperCase()+s.slice(1) : s; }
+
+// Footer battle button
+document.getElementById('battleBtn').addEventListener('click', () => showPage('battle'));
+
+// Simulate battle button (added to battle page footer dynamically)
+window.simulateBattle = simulateBattle();
+
 init();
+</script>
+
+<!-- Battle page footer inject -->
+<script>
+// Inject simulate button into footer when on battle page
+const origShowPage = window.showPage;
 </script>
 </body>
 </html>
